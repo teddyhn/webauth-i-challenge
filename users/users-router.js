@@ -11,14 +11,14 @@ router.post('/register', (req, res) => {
     if (username && password) {
         const hash = bcrypt.hashSync(password, 10);
     
-        password = hash;
+        req.body.password = hash;
     
         Users.add(req.body)
             .then(saved => {
                 res.status(201).json(saved)
             })
-            .catch(error => {
-                res.status(500).json(error)
+            .catch(err => {
+                res.status(500).json(err)
             })
     } else {
         res.status(400).json({ message: "Please provide valid credentials" })
@@ -29,6 +29,18 @@ router.post('/login', protected, (req, res) => {
     res.status(200).json({ message: "Logged in" });
 });
 
+router.get('/users', (req, res) => {
+    req.session && req.session.userId ?
+    Users.find()
+        .then(users => {
+            res.status(200).json(users)
+        })
+        .catch(err => {
+            res.status(400).json(err)
+        })
+    : res.status(400).json({ message: "You shall not pass!" });
+})
+
 
 // Middleware
 function protected(req, res, next) {
@@ -38,10 +50,8 @@ function protected(req, res, next) {
         Users.findBy({ username })
             .first()
             .then(user => {
-                if (user && bcrypt.compare(password, user.password)) {
-                    req.session.user = {
-                        id: user.id
-                    };
+                if (user && bcrypt.compareSync(password, user.password)) {
+                    req.session.userId = user.id;
                     next();
                 } else res.status(400).json({ error: "You shall not pass!" });
             })
