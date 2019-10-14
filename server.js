@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 
+const restricted = require('./middleware/restricted.js');
 const UsersRouter = require('./users/users-router.js');
 
 const server = express();
@@ -19,6 +20,7 @@ server.use(
     })
 );
 server.use(express.json());
+server.use('/api/restricted/*', restricted);
 server.use('/api', UsersRouter);
 
 module.exports = server;
