@@ -29,6 +29,8 @@ router.post('/login', protected, (req, res) => {
     res.status(200).json({ message: "Logged in" });
 });
 
+
+// Middleware
 function protected(req, res, next) {
     const { username, password } = req.body;
   
@@ -36,15 +38,18 @@ function protected(req, res, next) {
         Users.findBy({ username })
             .first()
             .then(user => {
-                (user && bcrypt.compareSync(password, user.password))
-                ? next()
-                : res.status(400).json({ error: "You shall not pass!" })
+                if (user && bcrypt.compare(password, user.password)) {
+                    req.session.user = {
+                        id: user.id
+                    };
+                    next();
+                } else res.status(400).json({ error: "You shall not pass!" });
             })
             .catch(err => {
-                res.status(400).json({ error: "You shall not pass!" })
+                res.status(400).json(err)
             })
     } else {
-        res.status(400).json({ message: "You shall not pass!" })
+        res.status(400).json({ message: "Invalid credentials" })
     };
 };
 
