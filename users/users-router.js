@@ -30,7 +30,7 @@ router.post('/login', protected, (req, res) => {
 });
 
 router.get('/users', (req, res) => {
-    req.session && req.session.userId ?
+    req.session && req.session.user ?
     Users.find()
         .then(users => {
             res.status(200).json(users)
@@ -39,7 +39,19 @@ router.get('/users', (req, res) => {
             res.status(400).json(err)
         })
     : res.status(400).json({ message: "You shall not pass!" });
-})
+});
+
+router.get('/logout', (req, res) => {
+    if (req.session) {
+      req.session.destroy(err => {
+        if (err) {
+          res.send('error logging out');
+        } else {
+          res.send('good bye');
+        }
+      });
+    }
+  });
 
 
 // Middleware
@@ -51,7 +63,7 @@ function protected(req, res, next) {
             .first()
             .then(user => {
                 if (user && bcrypt.compareSync(password, user.password)) {
-                    req.session.userId = user.id;
+                    req.session.user = user;
                     next();
                 } else res.status(400).json({ error: "You shall not pass!" });
             })
